@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>My App</h1>
+
+    <div class="profile-menu">
+      <button id="profile-trigger" class="profile-trigger" type="button">
+        <span class="avatar" id="avatar-initial">?</span>
+      </button>
+
+      <div id="profile-dropdown" class="profile-dropdown hidden">
+        <div class="profile-dropdown-header">
+          <span class="avatar avatar-lg" id="avatar-initial-lg">?</span>
+          <p class="profile-email" id="dropdown-email">...</p>
+        </div>
+        <hr>
+        <button id="sign-out-btn" class="dropdown-link" type="button">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="card">
+      <p>Welcome — this is where your app content goes.</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
