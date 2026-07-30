@@ -1,18 +1,3 @@
-// Extracts dashboard data live from dashboard-data-workbook.xlsx at
-// runtime (via SheetJS) — so replacing that file changes the dashboard
-// on the next page load, with no rebuild step and no hand-edited numbers.
-//
-// Expects two same-shaped sheets: "Profit and Loss" (Actual) and the
-// workbook's second sheet (Budget). Each is a flat export with one row
-// per account/tracking-category/period, with columns (0-indexed):
-//   4  Type          — REVENUE / DIRECTCOSTS / EXPENSE / OVERHEADS / WAGESEXPENSE
-//   10 Period         — Excel serial date
-//   12 Org Values     — the dollar amount for that row
-//
-// loadWorkbookRaw() does the (relatively expensive) fetch + parse once.
-// buildDashboardData(raw, asOfKey) is a cheap, pure recompute — called
-// again whenever the viewer picks a different "as of" period, without
-// re-fetching the workbook.
 
 const WORKBOOK_FILE = 'dashboard-data-workbook.xlsx';
 
@@ -42,11 +27,6 @@ function monthLabelLong(date) {
   return date.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-// rows: array-of-arrays from XLSX.utils.sheet_to_json(sheet, { header: 1, range: 1 })
-// Expense-type rows are stored as negative amounts in the source export
-// (standard accounting sign convention); flip them to positive magnitudes
-// so Expenses/EBITDA come out the same way the rest of the dashboard
-// (and the original workbook's own dashboards) expect.
 function aggregateByMonth(rows) {
   const byMonth = new Map();
   for (const row of rows) {
@@ -89,8 +69,6 @@ async function loadWorkbookRaw() {
   const budgetByMonth = aggregateByMonth(budgetRows);
   const sortedKeys = [...actualByMonth.keys()].sort();
 
-  // Only offer "as of" endpoints that have a full 12 months of history
-  // behind them, so the monthly trend charts are never sparse.
   const availablePeriods = sortedKeys.slice(11).map((key) => ({
     key,
     label: monthLabelLong(actualByMonth.get(key).date),

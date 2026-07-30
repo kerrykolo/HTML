@@ -411,12 +411,6 @@ button {
   overflow-x: auto;
 }
 
-@media (max-width: 900px) {
-  .combo-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
 .variance-table {
   width: 100%;
   border-collapse: collapse;

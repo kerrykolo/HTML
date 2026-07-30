@@ -1,9 +1,3 @@
-// Dashboard rendering — recreates Performance Reports.xlsm's Actuals /
-// Combo / Revenue / Expense / EBITDA dashboard sheets using Chart.js, fed
-// by data loaded live from dashboard-data-workbook.xlsx (see
-// dashboard-data.js). Replace that workbook file to update the numbers —
-// nothing here needs to change.
-
 const COLORS = {
   dark: '#1f3d2f',
   mid: '#3f6d5c',

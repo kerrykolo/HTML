@@ -1,8 +1,4 @@
-// Step 1 scaffold only. Sign-in below is a MOCK for local testing —
-// it just remembers whatever email you type, so the two-page flow can be
-// tested end to end before Azure/Entra ID exists. Step 2 replaces this
-// entirely with real MSAL.js / Entra ID authentication.
-
+// testing
 const MOCK_USER_KEY = 'mockUser';
 
 const signInBtn = document.getElementById('sign-in-btn');
@@ -15,13 +11,14 @@ const avatarInitialLg = document.getElementById('avatar-initial-lg');
 const dropdownEmail = document.getElementById('dropdown-email');
 
 function signIn() {
-  // index.html: no email input here — this is where MSAL.js
-  // loginPopup/loginRedirect (real login.microsoftonline.com) goes in
-  // Step 2. For now, send the user to the temporary mock sign-in page.
+  // MSAL.js
+  // The temporary mock sign-in page.
   if (!emailInput) {
     window.location.href = 'mock-signin.html';
     return;
   }
+
+  // testing
   const email = emailInput.value.trim();
   if (!email) {
     alert('Enter an email to continue.');
@@ -32,6 +29,7 @@ function signIn() {
 }
 
 function signOut() {
+  //testing — replace with msalInstance.logoutPopup()/logoutRedirect() in Step 2.
   sessionStorage.removeItem(MOCK_USER_KEY);
   window.location.href = 'index.html';
 }
@@ -44,10 +42,9 @@ if (signOutBtn) {
   signOutBtn.addEventListener('click', signOut);
 }
 
-// app.html only: populate the profile dropdown, or bounce back if no
-// mock user is signed in.
+
 if (profileDropdown) {
-  const email = sessionStorage.getItem(MOCK_USER_KEY);
+  const email = sessionStorage.getItem(MOCK_USER_KEY);//testing 
   if (!email) {
     window.location.href = 'index.html';
   } else {
