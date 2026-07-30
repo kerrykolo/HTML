@@ -140,7 +140,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <!-- \testing — real MSAL, commented out until real Azure values exist.
+       Swap: delete the msal-mock.js line below and uncomment this one. -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script> -->
+  <script src="msal-mock.js"></script>
   <script src="app.js"></script>
   <script src="dashboard-data.js"></script>
   <script src="dashboard.js"></script>
