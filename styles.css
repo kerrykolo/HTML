@@ -90,11 +90,24 @@ body {
   margin-bottom: 0.75rem;
 }
 
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
 .profile-email {
   margin: 0;
   font-weight: 600;
   font-size: 0.9rem;
   white-space: nowrap;
+}
+
+.profile-role {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: capitalize;
 }
 
 .profile-dropdown hr {

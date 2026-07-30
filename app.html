@@ -18,7 +18,10 @@
       <div id="profile-dropdown" class="profile-dropdown hidden">
         <div class="profile-dropdown-header">
           <span class="avatar avatar-lg" id="avatar-initial-lg">?</span>
-          <p class="profile-email" id="dropdown-email">...</p>
+          <div class="profile-info">
+            <p class="profile-email" id="dropdown-email">...</p>
+            <p class="profile-role" id="dropdown-role">...</p>
+          </div>
         </div>
         <hr>
         <button id="sign-out-btn" class="dropdown-link" type="button">Sign Out</button>
@@ -137,6 +140,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
   <script src="app.js"></script>
   <script src="dashboard-data.js"></script>
   <script src="dashboard.js"></script>
