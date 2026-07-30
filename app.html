@@ -34,6 +34,8 @@
       <select id="period-select"></select>
     </div>
 
+    <div id="table-summary"></div>
+
     <nav class="dash-tabs hidden">
       <button class="dash-tab" data-tab="actuals" type="button">Actuals Dashboard</button>
       <button class="dash-tab" data-tab="combo" type="button">Combo Dashboards</button>
@@ -70,7 +72,6 @@
 
     <section id="tab-combo" class="dash-panel hidden">
       <div class="section-bar">Combo Dashboards</div>
-      <div id="table-combo"></div>
 
       <div class="chart-grid two-col">
         <div class="chart-card">
@@ -83,7 +84,7 @@
         </div>
       </div>
 
-      <div class="chart-grid two-col">
+      <div class="chart-grid three-col">
         <div class="chart-card"><h3>3 Month Revenue v YTD v PY</h3><canvas id="chart-combo-revenue-actual"></canvas></div>
         <div class="chart-card"><h3>3 Month Revenue Budget v YTD v PY</h3><canvas id="chart-combo-revenue-budget"></canvas></div>
         <div class="chart-card"><h3>3 Month Revenue Actual Budget Variance</h3><canvas id="chart-combo-revenue-variance"></canvas></div>
@@ -100,7 +101,6 @@
 
     <section id="tab-revenue" class="dash-panel hidden">
       <div class="section-bar">Revenue Dashboard</div>
-      <div id="table-revenue"></div>
       <div class="chart-grid three-col">
         <div class="chart-card"><h3>3 Month Revenue v YTD v PY</h3><canvas id="chart-revenue-actual"></canvas></div>
         <div class="chart-card"><h3>3 Month Revenue Budget v YTD v PY</h3><canvas id="chart-revenue-budget"></canvas></div>

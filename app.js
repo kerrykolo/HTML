@@ -1,9 +1,8 @@
-// testing
+// \testing — sessionStorage stand-in for a real MSAL account object.
 const MOCK_USER_KEY = 'mockUser';
 
 const signInBtn = document.getElementById('sign-in-btn');
 const signOutBtn = document.getElementById('sign-out-btn');
-const emailInput = document.getElementById('email-input');
 const profileTrigger = document.getElementById('profile-trigger');
 const profileDropdown = document.getElementById('profile-dropdown');
 const avatarInitial = document.getElementById('avatar-initial');
@@ -11,25 +10,13 @@ const avatarInitialLg = document.getElementById('avatar-initial-lg');
 const dropdownEmail = document.getElementById('dropdown-email');
 
 function signIn() {
-  // MSAL.js
-  // The temporary mock sign-in page.
-  if (!emailInput) {
-    window.location.href = 'mock-signin.html';
-    return;
-  }
-
-  // testing
-  const email = emailInput.value.trim();
-  if (!email) {
-    alert('Enter an email to continue.');
-    return;
-  }
-  sessionStorage.setItem(MOCK_USER_KEY, email);
+  //testing 
+  sessionStorage.setItem(MOCK_USER_KEY, 'you@example.com');
   window.location.href = 'app.html';
 }
 
 function signOut() {
-  //testing — replace with msalInstance.logoutPopup()/logoutRedirect() in Step 2.
+  //testing
   sessionStorage.removeItem(MOCK_USER_KEY);
   window.location.href = 'index.html';
 }

@@ -178,7 +178,6 @@ const renderers = {
   },
 
   combo() {
-    renderVarianceTable('table-combo', D.varianceTable);
     renderGroupedBar('chart-combo-costbreakdown', D.months, [
       { label: 'Direct Cost', data: D.costBreakdown.direct, color: COLORS.dark },
       { label: 'Indirect Cost', data: D.costBreakdown.indirect, color: COLORS.mid },
@@ -192,7 +191,6 @@ const renderers = {
   },
 
   revenue() {
-    renderVarianceTable('table-revenue', D.varianceTable);
     renderMetricSet('revenue', D.quarterly.revenue);
   },
 
@@ -268,6 +266,7 @@ async function init() {
 
   populatePeriodSelect(periodSelect, raw.availablePeriods);
   D = buildDashboardData(raw, periodSelect.value);
+  renderVarianceTable('table-summary', D.varianceTable);
 
   if (loading) loading.remove();
   if (nav) nav.classList.remove('hidden');
@@ -279,6 +278,7 @@ async function init() {
 
   periodSelect.addEventListener('change', () => {
     D = buildDashboardData(raw, periodSelect.value);
+    renderVarianceTable('table-summary', D.varianceTable);
     destroyAllCharts();
     renderedTabs.clear();
     renderers[activeTabName]();
