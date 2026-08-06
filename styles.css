@@ -204,14 +204,21 @@ button {
   padding: 2rem 0;
 }
 
-.period-picker {
+.filters-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  gap: 1.25rem;
   margin-bottom: 1.25rem;
 }
 
-.period-picker label {
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.filter-group label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted);
@@ -219,7 +226,7 @@ button {
   letter-spacing: 0.03em;
 }
 
-.period-picker select {
+.filter-group select {
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
@@ -268,15 +275,22 @@ button {
 }
 
 .chart-grid.three-col {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .chart-grid.two-col {
   grid-template-columns: repeat(2, 1fr);
 }
 
+@media (max-width: 900px) {
+  .chart-grid.three-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 700px) {
-  .chart-grid.two-col {
+  .chart-grid.two-col,
+  .chart-grid.three-col {
     grid-template-columns: 1fr;
   }
 }

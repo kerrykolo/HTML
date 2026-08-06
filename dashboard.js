@@ -249,10 +249,18 @@ function populatePeriodSelect(select, availablePeriods) {
   select.value = availablePeriods[availablePeriods.length - 1].key;
 }
 
+function populateFilterSelect(select, values) {
+  select.innerHTML = ['<option value="">All</option>', ...values.map((v) => `<option value="${v}">${v}</option>`)].join('');
+  select.value = '';
+}
+
 async function init() {
   const loading = document.getElementById('dashboard-loading');
   const nav = document.querySelector('.dash-tabs');
-  const periodPicker = document.getElementById('period-picker');
+  const filtersBar = document.getElementById('filters-bar');
+  const companySelect = document.getElementById('company-select');
+  const tc1Select = document.getElementById('tc1-select');
+  const tc2Select = document.getElementById('tc2-select');
   const periodSelect = document.getElementById('period-select');
 
   let raw;
@@ -264,25 +272,37 @@ async function init() {
     return;
   }
 
+  populateFilterSelect(companySelect, raw.companies);
+  populateFilterSelect(tc1Select, raw.tc1Options);
+  populateFilterSelect(tc2Select, raw.tc2Options);
   populatePeriodSelect(periodSelect, raw.availablePeriods);
-  D = buildDashboardData(raw, periodSelect.value);
-  renderVarianceTable('table-summary', D.varianceTable);
 
-  if (loading) loading.remove();
-  if (nav) nav.classList.remove('hidden');
-  if (periodPicker) periodPicker.classList.remove('hidden');
+  function currentFilters() {
+    return { company: companySelect.value, tc1: tc1Select.value, tc2: tc2Select.value };
+  }
 
-  document.querySelectorAll('.dash-tab').forEach((btn) => {
-    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
-  });
-
-  periodSelect.addEventListener('change', () => {
-    D = buildDashboardData(raw, periodSelect.value);
+  function refresh() {
+    D = buildDashboardData(raw, periodSelect.value, currentFilters());
     renderVarianceTable('table-summary', D.varianceTable);
     destroyAllCharts();
     renderedTabs.clear();
     renderers[activeTabName]();
     renderedTabs.add(activeTabName);
+  }
+
+  D = buildDashboardData(raw, periodSelect.value, currentFilters());
+  renderVarianceTable('table-summary', D.varianceTable);
+
+  if (loading) loading.remove();
+  if (nav) nav.classList.remove('hidden');
+  if (filtersBar) filtersBar.classList.remove('hidden');
+
+  document.querySelectorAll('.dash-tab').forEach((btn) => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+
+  [companySelect, tc1Select, tc2Select, periodSelect].forEach((select) => {
+    select.addEventListener('change', refresh);
   });
 
   activateTab('actuals');

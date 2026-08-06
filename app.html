@@ -32,9 +32,23 @@
   <main class="dashboard">
     <p id="dashboard-loading">Loading dashboard data&hellip;</p>
 
-    <div id="period-picker" class="period-picker hidden">
-      <label for="period-select">Period</label>
-      <select id="period-select"></select>
+    <div id="filters-bar" class="filters-bar hidden">
+      <div class="filter-group">
+        <label for="company-select">Companies</label>
+        <select id="company-select"></select>
+      </div>
+      <div class="filter-group">
+        <label for="tc1-select">Tracking Category 1</label>
+        <select id="tc1-select"></select>
+      </div>
+      <div class="filter-group">
+        <label for="tc2-select">Tracking Category 2</label>
+        <select id="tc2-select"></select>
+      </div>
+      <div class="filter-group">
+        <label for="period-select">Period</label>
+        <select id="period-select"></select>
+      </div>
     </div>
 
     <div id="table-summary"></div>
@@ -144,6 +158,7 @@
        Swap: delete the msal-mock.js line below and uncomment this one. -->
   <!-- <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script> -->
   <script src="msal-mock.js"></script>
+  <script src="msal-config.js"></script>
   <script src="app.js"></script>
   <script src="dashboard-data.js"></script>
   <script src="dashboard.js"></script>

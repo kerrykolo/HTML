@@ -9,6 +9,15 @@ const TYPE_MAP = {
   WAGESEXPENSE: 'wages',
 };
 
+// Column indices into each row (rows come from
+// XLSX.utils.sheet_to_json(sheet, { header: 1, range: 1 })).
+const COL_ORGANISATION = 0;
+const COL_TYPE = 4;
+const COL_TRACKING_1 = 8;
+const COL_TRACKING_2 = 9;
+const COL_PERIOD = 10;
+const COL_VALUE = 12;
+
 const EMPTY_MONTH = { revenue: 0, direct: 0, indirect: 0, overheads: 0, wages: 0 };
 
 function excelSerialToDate(serial) {
@@ -27,14 +36,42 @@ function monthLabelLong(date) {
   return date.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-function aggregateByMonth(rows) {
+function buildMonthDateIndex(rows) {
+  const dates = new Map();
+  for (const row of rows) {
+    const period = row[COL_PERIOD];
+    if (typeof period !== 'number') continue;
+    const date = excelSerialToDate(period);
+    const key = monthKey(date);
+    if (!dates.has(key)) dates.set(key, date);
+  }
+  return dates;
+}
+
+function distinctValues(rows, colIndex) {
+  const set = new Set();
+  for (const row of rows) {
+    const v = row[colIndex];
+    if (v !== undefined && v !== null && v !== '') set.add(v);
+  }
+  return [...set].sort();
+}
+
+// filters: { company, tc1, tc2 } — any omitted/empty means "no filter" (All).
+function aggregateByMonth(rows, filters) {
+  const { company, tc1, tc2 } = filters || {};
   const byMonth = new Map();
   for (const row of rows) {
-    const type = row[4];
-    const period = row[10];
-    const value = row[12];
+    if (company && row[COL_ORGANISATION] !== company) continue;
+    if (tc1 && row[COL_TRACKING_1] !== tc1) continue;
+    if (tc2 && row[COL_TRACKING_2] !== tc2) continue;
+
+    const type = row[COL_TYPE];
+    const period = row[COL_PERIOD];
+    const value = row[COL_VALUE];
     const category = TYPE_MAP[type];
     if (!category || typeof period !== 'number' || typeof value !== 'number') continue;
+
     const date = excelSerialToDate(period);
     const key = monthKey(date);
     if (!byMonth.has(key)) {
@@ -65,37 +102,49 @@ async function loadWorkbookRaw() {
   const actualRows = XLSX.utils.sheet_to_json(actualSheet, { header: 1, range: 1 });
   const budgetRows = XLSX.utils.sheet_to_json(budgetSheet, { header: 1, range: 1 });
 
-  const actualByMonth = aggregateByMonth(actualRows);
-  const budgetByMonth = aggregateByMonth(budgetRows);
-  const sortedKeys = [...actualByMonth.keys()].sort();
-
+  // Period list is derived unfiltered, so the set of selectable "as of"
+  // months stays stable regardless of which Company/Tracking filters are
+  // applied — filters just zero out months with no matching data instead
+  // of shrinking the period range.
+  const monthDates = buildMonthDateIndex(actualRows);
+  const sortedKeys = [...monthDates.keys()].sort();
   const availablePeriods = sortedKeys.slice(11).map((key) => ({
     key,
-    label: monthLabelLong(actualByMonth.get(key).date),
+    label: monthLabelLong(monthDates.get(key)),
   }));
 
-  return { actualByMonth, budgetByMonth, sortedKeys, availablePeriods };
+  const companies = distinctValues(actualRows, COL_ORGANISATION);
+  const tc1Options = distinctValues(actualRows, COL_TRACKING_1);
+  const tc2Options = distinctValues(actualRows, COL_TRACKING_2);
+
+  return {
+    actualRows, budgetRows, monthDates, sortedKeys, availablePeriods,
+    companies, tc1Options, tc2Options,
+  };
 }
 
-function buildDashboardData(raw, asOfKey) {
-  const { actualByMonth, budgetByMonth, sortedKeys } = raw;
+function buildDashboardData(raw, asOfKey, filters) {
+  const { actualRows, budgetRows, monthDates, sortedKeys } = raw;
+  const actualByMonth = aggregateByMonth(actualRows, filters);
+  const budgetByMonth = aggregateByMonth(budgetRows, filters);
+
   const asOfIndex = sortedKeys.indexOf(asOfKey);
   const cyStart = Math.max(0, asOfIndex - 11);
   const cyKeys = sortedKeys.slice(cyStart, asOfIndex + 1);
   const pyStart = Math.max(0, cyStart - 12);
   const pyKeys = sortedKeys.slice(pyStart, cyStart);
 
-  const months = cyKeys.map((k) => monthLabel(actualByMonth.get(k).date));
+  const months = cyKeys.map((k) => monthLabel(monthDates.get(k)));
 
-  const revenue = cyKeys.map((k) => actualByMonth.get(k).revenue);
-  const expenses = cyKeys.map((k) => expensesOf(actualByMonth.get(k)));
+  const revenue = cyKeys.map((k) => monthOrZero(actualByMonth, k).revenue);
+  const expenses = cyKeys.map((k) => expensesOf(monthOrZero(actualByMonth, k)));
   const ebitda = revenue.map((r, i) => r - expenses[i]);
 
   const costBreakdown = {
-    direct: cyKeys.map((k) => actualByMonth.get(k).direct),
-    indirect: cyKeys.map((k) => actualByMonth.get(k).indirect),
-    overheads: cyKeys.map((k) => actualByMonth.get(k).overheads),
-    wages: cyKeys.map((k) => actualByMonth.get(k).wages),
+    direct: cyKeys.map((k) => monthOrZero(actualByMonth, k).direct),
+    indirect: cyKeys.map((k) => monthOrZero(actualByMonth, k).indirect),
+    overheads: cyKeys.map((k) => monthOrZero(actualByMonth, k).overheads),
+    wages: cyKeys.map((k) => monthOrZero(actualByMonth, k).wages),
   };
 
   const costBreakdownBudget = {

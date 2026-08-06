@@ -9,10 +9,19 @@
 // line and uncomment the real MSAL CDN <script> line above it. Nothing in
 // app.js needs to change.
 //
-// To test different roles: open devtools console and run
+// To test different roles via app.js's ROLE_MAP fallback: open devtools
+// console and run
 //   localStorage.setItem('mockTestEmail', 'manager@example.com')
 // once, then click Sign In as usual — it'll keep using that email until
 // you change or clear it. Defaults to you@example.com if never set.
+//
+// To test the real-Entra-App-Roles path instead (bypassing ROLE_MAP
+// entirely, same as resolveRole() will do once Dinesh's team configures
+// real App Roles), run
+//   localStorage.setItem('mockRoles', 'manager')
+// (comma-separate for multiple roles). Clear it with
+// localStorage.removeItem('mockRoles') to fall back to ROLE_MAP again.
+//
 // (Uses localStorage, not a URL query param, because some static file
 // servers — including local `serve` — redirect *.html URLs to a clean
 // path and drop query strings in the process.)
@@ -21,7 +30,13 @@
   const CACHE_KEY = 'mockMsalAccount';
   const PENDING_KEY = 'mockMsalPendingLogin';
 
-  function makeAccount(email) {
+  function mockRolesFromStorage() {
+    const raw = localStorage.getItem('mockRoles');
+    if (!raw) return undefined;
+    return raw.split(',').map((r) => r.trim()).filter(Boolean);
+  }
+
+  function makeAccount(email, roles) {
     const localId = '00000000-0000-0000-0000-000000000000';
     return {
       homeAccountId: `${localId}.mock-tenant`,
@@ -30,6 +45,15 @@
       username: email,
       localAccountId: localId,
       name: email.split('@')[0],
+      // Mirrors the real AccountInfo shape — resolveRole() in app.js
+      // reads idTokenClaims.roles here, same as it would from a real
+      // Entra App Roles-enabled token.
+      idTokenClaims: {
+        preferred_username: email,
+        name: email.split('@')[0],
+        tid: 'mock-tenant',
+        ...(roles ? { roles } : {}),
+      },
     };
   }
 
@@ -45,11 +69,7 @@
       expiresOn: new Date(Date.now() + 3600 * 1000),
       fromCache: false,
       tokenType: 'Bearer',
-      idTokenClaims: {
-        preferred_username: account.username,
-        name: account.name,
-        tid: account.tenantId,
-      },
+      idTokenClaims: account.idTokenClaims,
       account,
     };
   }
@@ -71,6 +91,7 @@
       // localhost, no matter what production value is configured there.
       const email = localStorage.getItem('mockTestEmail') || 'you@example.com';
       sessionStorage.setItem(PENDING_KEY, email);
+      sessionStorage.setItem(CACHE_KEY, email);
       window.location.href = 'app.html';
     }
 
@@ -78,14 +99,16 @@
       const pendingEmail = sessionStorage.getItem(PENDING_KEY);
       if (!pendingEmail) return null;
       sessionStorage.removeItem(PENDING_KEY);
-      const account = makeAccount(pendingEmail);
-      sessionStorage.setItem(CACHE_KEY, JSON.stringify(account));
+      const account = makeAccount(pendingEmail, mockRolesFromStorage());
       return makeAuthResult(account);
     }
 
     getAllAccounts() {
-      const stored = sessionStorage.getItem(CACHE_KEY);
-      return stored ? [JSON.parse(stored)] : [];
+      // Rebuilds the account (with fresh roles) on every call, so changing
+      // localStorage.mockRoles + reloading reflects immediately — no need
+      // to sign out/in again to test a different role.
+      const email = sessionStorage.getItem(CACHE_KEY);
+      return email ? [makeAccount(email, mockRolesFromStorage())] : [];
     }
 
     getActiveAccount() {

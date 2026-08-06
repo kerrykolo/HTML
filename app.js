@@ -1,28 +1,17 @@
-// ============================================================
-// AZURE AD B2C / MSAL.JS CONFIGURATION
-// ============================================================
-const MSAL_CONFIG = {
-  auth: {
-    clientId: 'YOUR_CLIENT_ID_HERE', // <-- REPLACE YOUR_CLIENT_ID_HERE with "Application (client) ID"
-    authority: 'https://login.microsoftonline.com/YOUR_TENANT_ID_HERE', // <-- REPLACE YOUR_TENANT_ID_HERE with "Directory (tenant) ID"
-    redirectUri: 'https://kerrykolo.github.io/HTML/app.html', // <-- REPLACE YOUR_REDIRECT_URI_HERE with the same value as in Azure Portal > Authentication > Redirect URIs
-    postLogoutRedirectUri: 'https://kerrykolo.github.io/HTML/index.html', // <-- REPLACE YOUR_POST_LOGOUT_REDIRECT_URI_HERE with the same value as redirectUri
-  },
-  cache: {
-    cacheLocation: 'sessionStorage',
-    storeAuthStateInCookie: false,
-  },
-};
-
-// Scopes requested at sign-in. User.Read is the standard Microsoft Graph
-// "read my own basic profile" permission — add more scopes here later if
-// a future step needs to call other Graph APIs.
-const LOGIN_REQUEST = { scopes: ['User.Read'] };
+// MSAL_CONFIG and LOGIN_REQUEST now live in msal-config.js — that's the
+// only file that needs editing once real Azure values arrive.
 
 // ============================================================
 // ROLE MAPPING — placeholder emails, edit freely.
 // Add real users' emails here and assign them a role; anyone signed in
 // who isn't listed falls back to DEFAULT_ROLE.
+//
+// This is a stand-in, already prepared to retire itself: resolveRole()
+// checks for real Entra ID App Roles first (idTokenClaims.roles) and
+// only falls back to this manual table when no App Roles claim exists.
+// Once Dinesh's team configures App Roles in Azure Portal > Entra ID >
+// App registrations > (your app) > App roles, and assigns users to them,
+// this table stops being consulted automatically — no code change needed.
 // ============================================================
 const ROLE_MAP = {
   'manager@example.com': 'manager',
@@ -31,7 +20,12 @@ const ROLE_MAP = {
 };
 const DEFAULT_ROLE = 'basic';
 
-function resolveRole(email) {
+function resolveRole(account) {
+  const claims = account.idTokenClaims || {};
+  if (Array.isArray(claims.roles) && claims.roles.length > 0) {
+    return claims.roles[0]; // Real Entra App Roles — takes priority once configured.
+  }
+  const email = account.username;
   return ROLE_MAP[(email || '').toLowerCase()] || DEFAULT_ROLE;
 }
 
@@ -61,7 +55,7 @@ function signOut() {
 function renderSignedInUI(account) {
   // account.username is the account's UPN/email for work & school accounts.
   const email = account.username;
-  const role = resolveRole(email);
+  const role = resolveRole(account);
   const initial = (email.charAt(0) || '?').toUpperCase();
 
   avatarInitial.textContent = initial;
