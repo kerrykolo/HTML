@@ -241,6 +241,10 @@ function destroyAllCharts() {
 }
 
 function populatePeriodSelect(select, availablePeriods) {
+  if (!availablePeriods.length) {
+    select.innerHTML = '<option value="">No periods found</option>';
+    return;
+  }
   select.innerHTML = availablePeriods
     .slice()
     .reverse()
@@ -254,48 +258,103 @@ function populateFilterSelect(select, values) {
   select.value = '';
 }
 
-async function init() {
-  const loading = document.getElementById('dashboard-loading');
+function populateWorkbookSelect(select, workbookFiles) {
+  select.innerHTML = workbookFiles.map((w) => `<option value="${w.file}">${w.label}</option>`).join('');
+  select.value = workbookFiles[0].file;
+}
+
+let raw;
+
+function currentFilters() {
+  return {
+    company: document.getElementById('company-select').value,
+    tc1: document.getElementById('tc1-select').value,
+    tc2: document.getElementById('tc2-select').value,
+  };
+}
+
+function refresh() {
+  const periodSelect = document.getElementById('period-select');
+  D = buildDashboardData(raw, periodSelect.value, currentFilters());
+  renderVarianceTable('table-summary', D.varianceTable);
+  destroyAllCharts();
+  renderedTabs.clear();
+  renderers[activeTabName]();
+  renderedTabs.add(activeTabName);
+}
+
+// Hides/shows everything driven by the currently-loaded workbook (filter
+// bar, tab buttons, summary table) — but not individual tab panels, since
+// which one is visible is activateTab()'s job, called right after a
+// successful load.
+function setDashboardChromeVisible(visible) {
   const nav = document.querySelector('.dash-tabs');
   const filtersBar = document.getElementById('filters-bar');
+  const tableSummary = document.getElementById('table-summary');
+  [nav, filtersBar, tableSummary].forEach((el) => {
+    if (el) el.classList.toggle('hidden', !visible);
+  });
+}
+
+// Loads the given workbook file, rebuilds every filter's options from it
+// (companies/tracking categories/periods can differ file to file), then
+// renders — used both for the initial load and every time the workbook
+// dropdown changes.
+async function loadWorkbookAndRender(fileName) {
+  const loading = document.getElementById('dashboard-loading');
+
+  destroyAllCharts();
+  renderedTabs.clear();
+  setDashboardChromeVisible(false);
+  document.querySelectorAll('.dash-panel').forEach((panel) => panel.classList.add('hidden'));
+  loading.textContent = 'Loading dashboard data…';
+  loading.classList.remove('hidden');
+
+  try {
+    raw = await loadWorkbookRaw(fileName);
+
+    populateFilterSelect(document.getElementById('company-select'), raw.companies);
+    populateFilterSelect(document.getElementById('tc1-select'), raw.tc1Options);
+    populateFilterSelect(document.getElementById('tc2-select'), raw.tc2Options);
+    populatePeriodSelect(document.getElementById('period-select'), raw.availablePeriods);
+
+    D = buildDashboardData(raw, document.getElementById('period-select').value, currentFilters());
+    renderVarianceTable('table-summary', D.varianceTable);
+  } catch (err) {
+    loading.textContent = 'Could not load dashboard data: ' + err.message;
+    console.error(err);
+    return;
+  }
+
+  loading.classList.add('hidden');
+  setDashboardChromeVisible(true);
+
+  activateTab(activeTabName);
+}
+
+async function init() {
+  const loading = document.getElementById('dashboard-loading');
+  const workbookSelect = document.getElementById('workbook-select');
   const companySelect = document.getElementById('company-select');
   const tc1Select = document.getElementById('tc1-select');
   const tc2Select = document.getElementById('tc2-select');
   const periodSelect = document.getElementById('period-select');
 
-  let raw;
+  loading.textContent = 'Looking for workbook files…';
+
+  let workbookFiles;
   try {
-    raw = await loadWorkbookRaw();
+    workbookFiles = await discoverWorkbookFiles();
   } catch (err) {
-    if (loading) loading.textContent = 'Could not load dashboard data: ' + err.message;
+    loading.textContent = 'Could not load workbook list: ' + err.message;
     console.error(err);
     return;
   }
-
-  populateFilterSelect(companySelect, raw.companies);
-  populateFilterSelect(tc1Select, raw.tc1Options);
-  populateFilterSelect(tc2Select, raw.tc2Options);
-  populatePeriodSelect(periodSelect, raw.availablePeriods);
-
-  function currentFilters() {
-    return { company: companySelect.value, tc1: tc1Select.value, tc2: tc2Select.value };
+  if (!workbookFiles.length) {
+    loading.textContent = 'No workbook files found.';
+    return;
   }
-
-  function refresh() {
-    D = buildDashboardData(raw, periodSelect.value, currentFilters());
-    renderVarianceTable('table-summary', D.varianceTable);
-    destroyAllCharts();
-    renderedTabs.clear();
-    renderers[activeTabName]();
-    renderedTabs.add(activeTabName);
-  }
-
-  D = buildDashboardData(raw, periodSelect.value, currentFilters());
-  renderVarianceTable('table-summary', D.varianceTable);
-
-  if (loading) loading.remove();
-  if (nav) nav.classList.remove('hidden');
-  if (filtersBar) filtersBar.classList.remove('hidden');
+  populateWorkbookSelect(workbookSelect, workbookFiles);
 
   document.querySelectorAll('.dash-tab').forEach((btn) => {
     btn.addEventListener('click', () => activateTab(btn.dataset.tab));
@@ -305,7 +364,9 @@ async function init() {
     select.addEventListener('change', refresh);
   });
 
-  activateTab('actuals');
+  workbookSelect.addEventListener('change', () => loadWorkbookAndRender(workbookSelect.value));
+
+  await loadWorkbookAndRender(workbookSelect.value);
 }
 
 init();

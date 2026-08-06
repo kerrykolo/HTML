@@ -1,5 +1,23 @@
 
-const WORKBOOK_FILE = 'dashboard-data-workbook.xlsx';
+// ============================================================
+// WORKBOOK FILE DISCOVERY — reads workbooks/manifest.json, a plain list
+// of filenames living in the workbooks/ folder. To add a new workbook:
+// drop the .xlsx file into workbooks/, then add its filename to that
+// list. Any filename works — no naming pattern required. The dropdown
+// shows the raw filename (extension stripped), not a reformatted label.
+// ============================================================
+const WORKBOOKS_DIR = 'workbooks';
+const WORKBOOKS_MANIFEST = `${WORKBOOKS_DIR}/manifest.json`;
+
+async function discoverWorkbookFiles() {
+  const res = await fetch(WORKBOOKS_MANIFEST);
+  if (!res.ok) throw new Error(`Could not fetch ${WORKBOOKS_MANIFEST} (${res.status})`);
+  const fileNames = await res.json();
+  return fileNames.map((name) => ({
+    file: `${WORKBOOKS_DIR}/${name}`,
+    label: name.replace(/\.xlsx$/i, ''),
+  }));
+}
 
 const TYPE_MAP = {
   REVENUE: 'revenue',
@@ -90,9 +108,9 @@ function monthOrZero(map, key) {
 const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 const expensesOf = (m) => m.direct + m.indirect + m.overheads + m.wages;
 
-async function loadWorkbookRaw() {
-  const buf = await fetch(WORKBOOK_FILE).then((r) => {
-    if (!r.ok) throw new Error(`Could not fetch ${WORKBOOK_FILE} (${r.status})`);
+async function loadWorkbookRaw(fileName) {
+  const buf = await fetch(fileName).then((r) => {
+    if (!r.ok) throw new Error(`Could not fetch ${fileName} (${r.status})`);
     return r.arrayBuffer();
   });
   const wb = XLSX.read(buf, { type: 'array' });
@@ -106,9 +124,16 @@ async function loadWorkbookRaw() {
   // months stays stable regardless of which Company/Tracking filters are
   // applied — filters just zero out months with no matching data instead
   // of shrinking the period range.
+  //
+  // Every month with any data is offered as selectable — not just months
+  // with 12 full trailing months behind them — since different workbooks
+  // can have very different amounts of history (some may only span a few
+  // months). buildDashboardData() already clamps its lookback window to
+  // whatever's actually available, so an early/short selection just shows
+  // fewer trailing months rather than breaking.
   const monthDates = buildMonthDateIndex(actualRows);
   const sortedKeys = [...monthDates.keys()].sort();
-  const availablePeriods = sortedKeys.slice(11).map((key) => ({
+  const availablePeriods = sortedKeys.map((key) => ({
     key,
     label: monthLabelLong(monthDates.get(key)),
   }));

@@ -14,6 +14,10 @@
   box-sizing: border-box;
 }
 
+.hidden {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
@@ -77,10 +81,6 @@ body {
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   z-index: 10;
-}
-
-.profile-dropdown.hidden {
-  display: none;
 }
 
 .profile-dropdown-header {
@@ -207,15 +207,16 @@ button {
 .filters-bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 1.25rem;
   margin-bottom: 1.25rem;
 }
 
 .filter-group {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
 }
 
 .filter-group label {
@@ -236,6 +237,14 @@ button {
   border-radius: 8px;
   background: #ffffff;
   cursor: pointer;
+  /* Fixed width so the filter bar's wrapping is consistent regardless of
+     which workbook is loaded — option text length otherwise varies a lot
+     (e.g. "EXL Cloud Demo - AU" vs "Demo Company (AU)") and made the bar
+     wrap onto a different number of lines depending on the data. */
+  width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dash-tabs {
@@ -262,10 +271,6 @@ button {
 .dash-tab.active {
   color: var(--accent);
   border-bottom-color: var(--mint);
-}
-
-.dash-panel.hidden {
-  display: none;
 }
 
 .chart-grid {
